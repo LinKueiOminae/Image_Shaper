@@ -362,7 +362,8 @@ namespace ImageShaper
                 //copy the small part of the unit image bytes into the optimized smaller canvas of the SHP frame
                 for (int x = 0; x < optwidth; x++)
                     for (int y = 0; y < optheight; y++)
-                        optbytes[x + y * optwidth] = bytes[topleft.X + x + (topleft.Y + y) * bmp.Width];
+                        if (topleft.X + x + (topleft.Y + y) * bmp.Width < bytes.Length)
+                            optbytes[x + y * optwidth] = bytes[topleft.X + x + (topleft.Y + y) * bmp.Width];
 
                 COptFrame of = new COptFrame();
                 of.Size = new Size(optwidth, optheight);

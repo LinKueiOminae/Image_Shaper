@@ -1332,14 +1332,32 @@ namespace ImageShaper
 
 
             string SHPFilename = "result";
+            string SHPFileExtension = ".shp"; //default is .shp, but when a .tem file in SHP format is loaded, keep that extension instead
+            bool DoTrim = true;
             for (int r = 0; r < this.dataGridView_Files.Rows.Count; r++)
             {
                 if (this.dataGridView_Files.Rows[r].Cells[0].Value != null)
+                {
                     SHPFilename = ((CImageFile)this.dataGridView_Files.Rows[r].Cells[0].Value).FileName;
+                    if (((CImageFile)this.dataGridView_Files.Rows[r].Cells[0].Value).IsSHP)
+                    {
+                        DoTrim = false;
+                        //remember for SHPs the extension, because they can be also called .tem etc
+                        SHPFileExtension = Path.GetExtension(SHPFilename);
+                    }
+                }
                 if (SHPFilename != "") break;
             }
-            SHPFilename = Path.GetFileNameWithoutExtension(SHPFilename).TrimEnd(new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' });
-
+            SHPFilename = Path.GetFileNameWithoutExtension(SHPFilename);
+            //trim trailing frame numbers only if the first image is not an SHP
+            //for SHPs keep the filename exactly the same
+            if (DoTrim)
+            {
+                //first remove the trailing frame numbers
+                SHPFilename = SHPFilename.TrimEnd(new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' });
+                //then remove trailing spaces or underlines (this way allowing "myfile01_00001.png" to result in the SHP name "myfile01.shp" with a trailing number)
+                SHPFilename = SHPFilename.TrimEnd(new char[] { ' ', '_' });
+            }
 
             //collect the interface data into a package that can be send to the worker thread
             List<CImageJob> jobs = new List<CImageJob>();
@@ -1487,8 +1505,8 @@ namespace ImageShaper
                                 if (SplitResultCount <= convertedframes.Length)
                                     for (int r = 0; r < SplitResultCount; r++)
                                     {
-                                        string SHPFilenameResult = SHPFilename + ".shp";
-                                        if (SplitResultCount > 1) SHPFilenameResult = SHPFilename + "_" + r.ToString().PadLeft(maxdigits, '0') + ".shp";
+                                        string SHPFilenameResult = SHPFilename + SHPFileExtension;
+                                        if (SplitResultCount > 1) SHPFilenameResult = SHPFilename + "_" + r.ToString().PadLeft(maxdigits, '0') + SHPFileExtension;
 
                                         CImageResult[] SplitFrames = new CImageResult[splitFramesCount];
                                         Array.Copy(convertedframes, r * splitFramesCount, SplitFrames, 0, splitFramesCount);
@@ -1949,6 +1967,12 @@ namespace ImageShaper
             ab.AddEmptyLine(1);
             ab.AddText("\t-(update) new option \"Reverse order of selected cells\" added to the DataGrid context menu.");
 
+            ab.AddEmptyLine();
+            ab.AddText("Version 01.01.00.22", Color.Black, f);
+            ab.AddEmptyLine(1);
+            ab.AddText("\t-(update) The resuling SHP filename has trailing numbers only removed when operating on image files. When loading an SHP file, the resulting filename is exactly the same.");
+            ab.AddEmptyLine(1);
+            ab.AddText("\t-(bugfix) in rare cases \"opt. canvas\" caused an index of bounds error when creating a frame");
             
             ab.AddEmptyLine(1);
             ab.Show();
