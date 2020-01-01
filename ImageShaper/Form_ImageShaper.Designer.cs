@@ -469,6 +469,7 @@
             this.uC_Palette1.Name = "uC_Palette1";
             this.uC_Palette1.Palette = null;
             this.uC_Palette1.PaletteSelectedColor = 0;
+            this.uC_Palette1.ShowPaletteOnly = false;
             this.uC_Palette1.Size = new System.Drawing.Size(184, 179);
             this.uC_Palette1.TabIndex = 3;
             // 
@@ -593,6 +594,7 @@
             // 
             this.comboBox_Compression.Dock = System.Windows.Forms.DockStyle.Fill;
             this.comboBox_Compression.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox_Compression.DropDownWidth = 140;
             this.comboBox_Compression.FormattingEnabled = true;
             this.comboBox_Compression.Location = new System.Drawing.Point(100, 2);
             this.comboBox_Compression.Margin = new System.Windows.Forms.Padding(0, 2, 0, 0);
@@ -835,7 +837,7 @@
             // 
             this.toolStripComboBox_DefaultCompression.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.toolStripComboBox_DefaultCompression.Name = "toolStripComboBox_DefaultCompression";
-            this.toolStripComboBox_DefaultCompression.Size = new System.Drawing.Size(120, 21);
+            this.toolStripComboBox_DefaultCompression.Size = new System.Drawing.Size(140, 21);
             // 
             // Form_ImageShaper
             // 

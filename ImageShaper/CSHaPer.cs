@@ -28,6 +28,7 @@ namespace ImageShaper
         Uncompressed = 1,
         RLE_Zero = 2,
         Detect_best_size = 3,
+        Uncompressed_Full_Frame = 4,
     }
 
     class CSHaPer
@@ -320,22 +321,42 @@ namespace ImageShaper
                 public Color RadarColor;
             }
 
-            //reduce the frame to the smallest possible mainCanvasSize, removing the pure transparent part around the area of colored pixel
+            /// <summary>
+            /// reduce the frame to the smallest possible mainCanvasSize, removing the pure transparent part around the area of colored pixel
+            /// </summary>
+            /// <param name="bmp"></param>
+            /// <param name="format"></param>
+            /// <param name="BitFlags"></param>
+            /// <param name="RadarColor"></param>
+            /// <param name="keepEvenSize"></param>
+            /// <returns></returns>
             private static COptFrame GetOptimizedFrame(Bitmap bmp, SHP_TS_EncodingFormat format, SHP_TS_BitFlags BitFlags, Color RadarColor, bool keepEvenSize)
             {
                 Point topleft = new Point(int.MaxValue, int.MaxValue);
                 Point bottomright = new Point(0, 0);
 
                 byte[] bytes = ToBytes(bmp);
-                for (int x = 0; x < bmp.Width; x++)
-                    for (int y = 0; y < bmp.Height; y++)
-                        if (bytes[x + y * bmp.Width] != 0)
-                        {
-                            if (x < topleft.X) topleft.X = x;
-                            if (y < topleft.Y) topleft.Y = y;
-                            if (x > bottomright.X) bottomright.X = x;
-                            if (y > bottomright.Y) bottomright.Y = y;
-                        }
+
+                if (format != SHP_TS_EncodingFormat.Uncompressed_Full_Frame)
+                {
+                    for (int x = 0; x < bmp.Width; x++)
+                        for (int y = 0; y < bmp.Height; y++)
+                            if (bytes[x + y * bmp.Width] != 0)
+                            {
+                                if (x < topleft.X) topleft.X = x;
+                                if (y < topleft.Y) topleft.Y = y;
+                                if (x > bottomright.X) bottomright.X = x;
+                                if (y > bottomright.Y) bottomright.Y = y;
+                            }
+                }
+                else
+                {
+                    topleft.X = 0;
+                    topleft.Y = 0;
+                    bottomright.X = bmp.Width - 1;
+                    bottomright.Y = bmp.Height - 1;
+                    format = SHP_TS_EncodingFormat.Uncompressed;//after this point, save as usual uncompressed format
+                }
 
                 if (keepEvenSize)
                 {

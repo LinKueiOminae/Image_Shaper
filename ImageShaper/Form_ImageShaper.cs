@@ -310,7 +310,8 @@ namespace ImageShaper
             toolTip1.ShowAlways = true;
 
             // Set up the ToolTip text for the Button and Checkbox.
-            toolTip1.SetToolTip(this.toolStripComboBox_DefaultCompression.Control, "The default compression to use for all images that have \"Undefined\" compression set.\nUncompressed is SHP Builders Compression 1,\nRLE_Zero is SHP Builders Compression 3.\nDetect_best_size is first trying RLE_Zero. If that turns out bigger than uncompressed, uncompressed is used.");
+            toolTip1.SetToolTip(this.toolStripComboBox_DefaultCompression.Control, "The default compression to use for all images that have \"Undefined\" compression set.\nUncompressed is SHP Builders Compression 1,\nRLE_Zero is SHP Builders Compression 3.\nDetect_best_size is first trying RLE_Zero. If that turns out bigger than uncompressed, uncompressed is used." +
+                "\nUncompressed_Full_Frame writes the SHP frame uncompressed and in the full canvas size");
             //toolTip1.SetToolTip(this.toolStripMenuItem_Label_NUD_NrWorker.Control, "The number of threads to use for the color conversion of the imagelist. Default is number of processors.");
             toolTip1.SetToolTip(this.comboBox_Compression, "The compression method of the selected image/frame.\n\"Undefined\" means, this frame will use the global setting from the menustrip.");
             this.dataGridView_BitFields.ShowCellToolTips = false;
@@ -389,6 +390,7 @@ namespace ImageShaper
                         case SHP_TS_EncodingFormat.Uncompressed: this.dataGridView_BitFields.Rows[0].Cells[i].Value = "U"; break;
                         case SHP_TS_EncodingFormat.RLE_Zero: this.dataGridView_BitFields.Rows[0].Cells[i].Value = "R"; break;
                         case SHP_TS_EncodingFormat.Detect_best_size: this.dataGridView_BitFields.Rows[0].Cells[i].Value = "!"; break;
+                        case SHP_TS_EncodingFormat.Uncompressed_Full_Frame: this.dataGridView_BitFields.Rows[0].Cells[i].Value = "UF"; break;
                         default: this.dataGridView_BitFields.Rows[0].Cells[i].Value = "?"; break;
                     }
                 }
@@ -401,7 +403,6 @@ namespace ImageShaper
             int t = 0;
             for (byte i = 0; i < this.dataGridView_BitFields.Rows[0].Cells.Count; i++)
             {
-
                 if ((i != 1) && ((bool)this.dataGridView_BitFields.Rows[0].Cells[i].Value))
                     t += (int)Math.Pow((double)2, (double)i);
             }
@@ -467,6 +468,12 @@ namespace ImageShaper
                             Font f = new Font(this.dataGridView_BitFields.Font.FontFamily, 14, FontStyle.Bold);
                             SizeF s = e.Graphics.MeasureString("?", f);
                             e.Graphics.DrawString("?", f, Brushes.Black, new Point(center.X - (int)s.Width / 2, center.Y - 1 - (int)s.Height / 2));
+                            break;
+                        }
+                    case "UF":
+                        {
+                            e.Graphics.DrawRectangle(Pens.Black, new Rectangle(new Point(e.CellBounds.X + 2, e.CellBounds.Y + 2), new Size(e.CellBounds.Width - 5, e.CellBounds.Height - 5)));
+                            e.Graphics.DrawRectangle(Pens.Black, new Rectangle(new Point(e.CellBounds.X + 3, e.CellBounds.Y + 3), new Size(e.CellBounds.Width - 7, e.CellBounds.Height - 7)));
                             break;
                         }
                     default: break;
@@ -1973,7 +1980,14 @@ namespace ImageShaper
             ab.AddText("\t-(update) The resuling SHP filename has trailing numbers only removed when operating on image files. When loading an SHP file, the resulting filename is exactly the same.");
             ab.AddEmptyLine(1);
             ab.AddText("\t-(bugfix) in rare cases \"opt. canvas\" caused an index of bounds error when creating a frame");
-            
+
+            ab.AddEmptyLine();
+            ab.AddText("Version 01.01.00.23", Color.Black, f);
+            ab.AddEmptyLine(1);
+            ab.AddText("\t-(update) new format \"Uncompressed_Full_Frame\" added, which stores each SHP frame in its full size. \"optimize canvas\" doesn't work for this case");
+            ab.AddEmptyLine(1);
+            ab.AddText("\t-(update) command line option added to support setting \"Split result\"");
+
             ab.AddEmptyLine(1);
             ab.Show();
         }
@@ -2092,6 +2106,8 @@ namespace ImageShaper
                         case "rle_zero": this.comboBox_Compression.SelectedIndex = 2; break;
                         case "3":
                         case "detect_best_size": this.comboBox_Compression.SelectedIndex = 3; break;
+                        case "4":
+                        case "uncompressed_full_frame": this.comboBox_Compression.SelectedIndex = 4; break;
                     }
                 }
 
@@ -2141,6 +2157,13 @@ namespace ImageShaper
                         case "on":
                         case "yes": this.checkBox_PreventWobbleBug.Checked = true; break;
                     }
+                }
+
+                if (args[i].StartsWith("-split="))
+                {
+                    int splitvalue = 1;
+                    if ((int.TryParse(argvalue, out splitvalue)) && (splitvalue > 0) && (splitvalue <= this.numericUpDown_SplitResult.Maximum))
+                        this.numericUpDown_SplitResult.Value = splitvalue;
                 }
             }
             CreatSHP(closewhenfinished);
