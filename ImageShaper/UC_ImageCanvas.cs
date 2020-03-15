@@ -6,13 +6,6 @@ using System.Data;
 using System.Text;
 using System.Windows.Forms;
 
-/*
- * With multiple tmp layers open, save them all in one step into the bmp folder of the editor
- *  - use the public filename property of CTaMPer
- * 
- * 
-*/
-
 namespace ImageShaper
 {
     public partial class UC_ImageCanvas : UserControl
@@ -26,6 +19,28 @@ namespace ImageShaper
         protected void OnPixelColorChanged(object sender, ImageCanvasDataEventArgs e)
         {
             var target = PixelColorChanged;
+            if (target != null)
+            {
+                target(this, e);
+            }
+        }
+
+        public event EventHandler<EventArgs> ZoomLevelChanged;
+        // The method which fires the Event
+        protected void OnZoomLevelChanged(object sender, EventArgs e)
+        {
+            var target = ZoomLevelChanged;
+            if (target != null)
+            {
+                target(this, e);
+            }
+        }
+
+        public event EventHandler<LocationEventArgs> PixelClicked;
+        // The method which fires the Event
+        protected void OnPixelClicked(object sender, LocationEventArgs e)
+        {
+            var target = PixelClicked;
             if (target != null)
             {
                 target(this, e);
@@ -84,28 +99,88 @@ namespace ImageShaper
             set
             {
                 _zoomLevel = value;
-                UpdateZoomedPicture();
+                UpdateZoomedPicture(true);
+            }
+        }
+
+        private bool _LocationFromCenter = false;
+        public bool LocationFromCenter
+        {
+            get { return _LocationFromCenter; }
+            set { _LocationFromCenter = value; }
+        }
+
+        private bool _ShowColorInfo = true;
+        public bool ShowColorInfo
+        {
+            get { return _ShowColorInfo; }
+            set { _ShowColorInfo = value; }
+        }
+
+        private bool _ShowCenterCross = false;
+        public bool ShowCenterCross
+        {
+            get { return _ShowCenterCross; }
+            set { _ShowCenterCross = value; }
+        }
+
+        private Color _PreviewPixelColor = Color.FromArgb(255, 255, 255, 255);
+
+        private Point[] _PreviewPixel;
+        public Point[] PreviewPixel
+        {
+            get { return _PreviewPixel; }
+            set
+            {
+                _PreviewPixel = value;
+                UpdateZoomedPicture(true);
+            }
+        }
+
+        private bool _CaptureFocusOnMouseOver = true;
+        public bool CaptureFocusOnMouseOver
+        {
+            get { return _CaptureFocusOnMouseOver; }
+            set
+            {
+                _CaptureFocusOnMouseOver = value;
+                this.label_MouseCoord.Text = "[x" + (0).ToString("000") + " , y" + (0).ToString("000") + "]";
+                if (_CaptureFocusOnMouseOver)
+                    this.label_MouseCoord.Text += " Zoom=" + ZoomLevel.ToString();
             }
         }
 
         public UC_ImageCanvas()
         {
             InitializeComponent();
+            this.panel_Canvas.Padding = new Padding(panel_border_size);
             this.pictureBox_Canvas.SizeChanged += new EventHandler(Canvas_SizeChanged);
             this.panel_Canvas.SizeChanged += new EventHandler(Canvas_SizeChanged);
             this.pictureBox_Canvas.MouseMove += new MouseEventHandler(pictureBox_Canvas_MouseMove);
 
             this.panel_Canvas.MouseEnter += new EventHandler(Canvas_MouseEnter);
             this.pictureBox_Canvas.MouseEnter += new EventHandler(Canvas_MouseEnter);
+            this.pictureBox_Canvas.MouseClick += new MouseEventHandler(pictureBox_Canvas_MouseClick);
             this.MouseEnter += new EventHandler(Canvas_MouseEnter);
             this.MouseWheel += new MouseEventHandler(Canvas_MouseWheel);
 
-            this.label_MouseCoord.Text = "[x" + (0).ToString("000") + " , y" + (0).ToString("000") + "] Zoom=" + ZoomLevel.ToString();
+            this.label_MouseCoord.Text = "[x" + (0).ToString("000") + " , y" + (0).ToString("000") + "]";
+            if (_CaptureFocusOnMouseOver)
+                this.label_MouseCoord.Text += " Zoom=" + ZoomLevel.ToString();
+        }
+
+        void pictureBox_Canvas_MouseClick(object sender, MouseEventArgs e)
+        {
+            Point p = new Point((int)Math.Truncate(e.X / _zoomLevel), (int)Math.Truncate(e.Y / _zoomLevel));
+            if ((_LocationFromCenter) && (normalImage != null))
+                p = new Point(p.X - Center.X, p.Y - Center.Y);
+            OnPixelClicked(sender, new LocationEventArgs() { Location = p });
         }
 
         void Canvas_MouseEnter(object sender, EventArgs e)
         {
-            this.Focus();
+            if (_CaptureFocusOnMouseOver)
+                this.Focus();
         }
 
         public Image Image
@@ -121,13 +196,40 @@ namespace ImageShaper
         {
             this.normalImage = image;
             this.pictureBox_Canvas.Image = null;
-            UpdateZoomedPicture();
+            UpdateZoomedPicture(true);
         }
 
         public void SetBackgroundImage(Image image)
         {
             this.BackgroundImage = image;
-            UpdateZoomedPicture();
+            UpdateZoomedPicture(true);
+        }
+
+        private Point _CenterOffset = new Point(0, 0);
+        public Point CenterOffset
+        {
+            get { return _CenterOffset; }
+            set
+            {
+                _CenterOffset = value;
+                UpdateZoomedPicture(true);
+            }
+        }
+
+        /// <summary>
+        /// the center point of the normalImage
+        /// </summary>
+        private Point Center
+        {
+            get
+            {
+                //SHPBuilder shows center with Point((normalImage.Width -1) / 2, (normalImage.Height -1) / 2);
+
+                //the game however works like this
+                if (normalImage != null)
+                    return new Point(normalImage.Width / 2 + CenterOffset.X, normalImage.Height / 2 + CenterOffset.Y);
+                return new Point(-1, -1);
+            }
         }
 
         private Image normalImage;
@@ -143,7 +245,7 @@ namespace ImageShaper
                 if (_zoomLevel < MinimumZoom) _zoomLevel = MinimumZoom;
                 if (_zoomLevel > MaximumZoom) _zoomLevel = MaximumZoom;
                 ZoomLevel = _zoomLevel;
-
+                OnZoomLevelChanged(this, new EventArgs());
                 this.label_MouseCoord.Text = "Zoom=" + ZoomLevel.ToString();
             }
         }
@@ -155,12 +257,20 @@ namespace ImageShaper
 
         public void UpdateZoomedPicture()
         {
+            UpdateZoomedPicture(false);
+        }
+
+        public void UpdateZoomedPicture(bool ForceUpdate)
+        {
+            this.label_Color.Visible = _ShowColorInfo;
+
             if (normalImage != null)
             {
                 Point loc = new Point(0, 0);
                 Size sz;
                 if ((this.pictureBox_Canvas.Image == null)
-                  ||(normalImage.Width * _zoomLevel != this.pictureBox_Canvas.Image.Width))
+                  ||(normalImage.Width * _zoomLevel != this.pictureBox_Canvas.Image.Width)
+                  || ForceUpdate)
                 {
                     if (_zoomLevel != 1)
                     {
@@ -196,7 +306,22 @@ namespace ImageShaper
                         using (Graphics gr = Graphics.FromImage(correctAlpha))
                             gr.DrawImage(normalImage, new Point(0, 0));
 
+                    if (ShowCenterCross)
+                    {
+                        Pen crosslinepen = new Pen(Color.FromArgb(100, 255, 255, 255));
+                        using (Graphics gr = Graphics.FromImage(correctAlpha))
+                        {
+                            gr.DrawLine(crosslinepen, new Point(Center.X, 0), new Point(Center.X, correctAlpha.Height));
+                            gr.DrawLine(crosslinepen, new Point(0, Center.Y), new Point(correctAlpha.Width, Center.Y));
+                        }
+                    }
+                    if (_PreviewPixel != null)
+                        foreach (Point p in _PreviewPixel)
+                            using (Graphics gr = Graphics.FromImage(correctAlpha))
+                                gr.FillRectangle(new SolidBrush(_PreviewPixelColor), p.X + (ShowCenterCross ? Center.X : 0), p.Y + (ShowCenterCross ? Center.Y : 0), 1, 1);
+
                     zoomedImage_g.DrawImage(correctAlpha, new Rectangle(0, 0, sz.Width, sz.Height));
+                    
                     zoomedImage_g.Dispose();
                     this.pictureBox_Canvas.Image = zoomedImage;
                     this.pictureBox_Canvas.Size = zoomedImage.Size;
@@ -211,21 +336,23 @@ namespace ImageShaper
         /// </summary>
         private void AdjustPosition()
         {
-            this.panel_Canvas.HorizontalScroll.Value = 0;
-            this.panel_Canvas.VerticalScroll.Value = 0;
-            //this adds a border to the top left
-            int x = 0;
-            int y = 0;
-            int h = 0; int v = 0;
-            if (this.panel_Canvas.HorizontalScroll.Visible) h = 16;
-            if (this.panel_Canvas.VerticalScroll.Visible) v = 16;
-            if (this.panel_Canvas.Width > this.pictureBox_Canvas.Width + 2 * panel_border_size + v) x = (this.panel_Canvas.Width - (this.pictureBox_Canvas.Width + 2 * panel_border_size)) / 2;
-            if (this.panel_Canvas.Height > this.pictureBox_Canvas.Height + 2 * panel_border_size + h) y = (this.panel_Canvas.Height - (this.pictureBox_Canvas.Height + 2 * panel_border_size)) / 2;
-            if (x < panel_border_size) x = panel_border_size;
-            if (y < panel_border_size) y = panel_border_size;
-            this.pictureBox_Canvas.Location = new Point(x, y);
+            if (this.pictureBox_Canvas.Image != null)
+            {
+                this.pictureBox_Canvas.MinimumSize = this.pictureBox_Canvas.Image.Size;
+                this.pictureBox_Canvas.MaximumSize = this.pictureBox_Canvas.Image.Size;
+                int w = (this.panel_Canvas.Width + 2 * panel_border_size - this.pictureBox_Canvas.Width) / 2;
+                int h = (this.panel_Canvas.Height + 2 * panel_border_size - this.pictureBox_Canvas.Height) / 2;
+                if (w < panel_border_size) w = panel_border_size;
+                if (h < panel_border_size) h = panel_border_size;
+                this.panel_Canvas.Padding = new Padding(w, h, w, h);
+            }
+            else
+            {
+                this.pictureBox_Canvas.MinimumSize = new Size(1, 1);
+                this.pictureBox_Canvas.MaximumSize = new Size(1, 1);
+            }
 
-            //this adds a border to the bottom right
+            //this adds a border to the bottom right and lets the scrollbars appear on the panel_canvas
             this.control_PanelBorderDummy.Location = new Point(this.pictureBox_Canvas.Location.X + this.pictureBox_Canvas.Width + panel_border_size,
                                                              this.pictureBox_Canvas.Location.Y + this.pictureBox_Canvas.Height + panel_border_size);
             this.control_PanelBorderDummy.Width = 0;
@@ -242,11 +369,22 @@ namespace ImageShaper
 
         int PaletteColorUnderMouse = 0;
         void pictureBox_Canvas_MouseMove(object sender, MouseEventArgs e)
-        {
+        {            
             Point p = new Point((int)Math.Truncate(e.X / _zoomLevel), (int)Math.Truncate(e.Y / _zoomLevel));
-            this.label_MouseCoord.Text = "[x" + (p.X).ToString("000") + " , y" + (p.Y).ToString("000") + "] Zoom=" + ZoomLevel.ToString();
 
-            if (normalImage != null)
+            if ((_LocationFromCenter) && (normalImage != null))
+                this.label_MouseCoord.Text = "[x" + (p.X - Center.X).ToString("000") + " , y" + (p.Y - Center.Y).ToString("000") + "]";
+            else
+                this.label_MouseCoord.Text = "[x" + (p.X).ToString("000") + " , y" + (p.Y).ToString("000") + "]";
+
+            //Zoom via MouseWheel works only when the control has focus (which panels and pictureboxes usualy can't have). It only gets focus when CaptureFocusOnMouseOver is true
+            if (_CaptureFocusOnMouseOver)
+                this.label_MouseCoord.Text += " Zoom=" + ZoomLevel.ToString();
+
+
+            this.label_Color.Visible = _ShowColorInfo;
+
+            if (normalImage != null) 
             {
                 if ((p.X < normalImage.Width) && (p.Y < normalImage.Height))
                     if (normalImage.PixelFormat != System.Drawing.Imaging.PixelFormat.Format8bppIndexed)

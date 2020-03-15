@@ -74,6 +74,7 @@ namespace ImageShaper
         internal static Bitmap GetFrame(string file, int frameNr, CPalette pal)
         {
             Bitmap result = new Bitmap(1, 1, PixelFormat.Format8bppIndexed);
+            if (string.IsNullOrEmpty(file)) return result;
             ShpTSLoader shp = new ShpTSLoader();
             ISpriteFrame SHPFframe = null;
 

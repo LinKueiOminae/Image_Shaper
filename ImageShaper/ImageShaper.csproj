@@ -75,6 +75,10 @@
     <Compile Include="CEnhRichTextBox.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="CExtensions.cs" />
+    <Compile Include="CheckGroupBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="CHelperClasses.cs">
     </Compile>
     <Compile Include="Cinimanager.cs" />
@@ -101,11 +105,23 @@
     <Compile Include="Form_DockPreview.Designer.cs">
       <DependentUpon>Form_DockPreview.cs</DependentUpon>
     </Compile>
+    <Compile Include="Form_FireFLHFinder.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form_FireFLHFinder.Designer.cs">
+      <DependentUpon>Form_FireFLHFinder.cs</DependentUpon>
+    </Compile>
     <Compile Include="Form_ImageShaper.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Form_ImageShaper.Designer.cs">
       <DependentUpon>Form_ImageShaper.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Form_LoadAndSplitImage.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form_LoadAndSplitImage.Designer.cs">
+      <DependentUpon>Form_LoadAndSplitImage.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -121,9 +137,16 @@
       <DependentUpon>Form_DockPreview.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="Form_FireFLHFinder.resx">
+      <DependentUpon>Form_FireFLHFinder.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="Form_ImageShaper.resx">
       <DependentUpon>Form_ImageShaper.cs</DependentUpon>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Form_LoadAndSplitImage.resx">
+      <DependentUpon>Form_LoadAndSplitImage.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

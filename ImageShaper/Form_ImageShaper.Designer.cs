@@ -88,6 +88,8 @@
             this.toolStripMenuItem_Label_NUD_NrWorker = new ImageShaper.ToolStrip_Item_Label_NUD();
             this.toolStripMenuItem_Outputfolder = new ImageShaper.ToolStrip_Item_FolderSelector();
             this.toolStripMenuItem_previewBackgroundImage = new ImageShaper.ToolStrip_Item_FolderSelector();
+            this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.fireFLHFinderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripLabel_DefaultCompression = new System.Windows.Forms.ToolStripLabel();
             this.toolStripComboBox_DefaultCompression = new System.Windows.Forms.ToolStripComboBox();
             this.tableLayoutPanel_1Main.SuspendLayout();
@@ -733,6 +735,7 @@
             this.fileToolStripMenuItem,
             this.showHidePreviewToolStripMenuItem,
             this.optionsToolStripMenuItem,
+            this.toolsToolStripMenuItem,
             this.toolStripLabel_DefaultCompression,
             this.toolStripComboBox_DefaultCompression});
             this.customMenuStrip1.Location = new System.Drawing.Point(0, 0);
@@ -824,6 +827,23 @@
             this.toolStripMenuItem_previewBackgroundImage.Name = "toolStripMenuItem_previewBackgroundImage";
             this.toolStripMenuItem_previewBackgroundImage.Size = new System.Drawing.Size(325, 25);
             this.toolStripMenuItem_previewBackgroundImage.Text = "Preview Background Image:";
+            // 
+            // toolsToolStripMenuItem
+            // 
+            this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.fireFLHFinderToolStripMenuItem});
+            this.toolsToolStripMenuItem.ForeColor = System.Drawing.Color.White;
+            this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(44, 21);
+            this.toolsToolStripMenuItem.Text = "Tools";
+            // 
+            // fireFLHFinderToolStripMenuItem
+            // 
+            this.fireFLHFinderToolStripMenuItem.ForeColor = System.Drawing.Color.White;
+            this.fireFLHFinderToolStripMenuItem.Name = "fireFLHFinderToolStripMenuItem";
+            this.fireFLHFinderToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.fireFLHFinderToolStripMenuItem.Text = "FireFLH Finder";
+            this.fireFLHFinderToolStripMenuItem.Click += new System.EventHandler(this.FireFLHFinderToolStripMenuItem_Click);
             // 
             // toolStripLabel_DefaultCompression
             // 
@@ -948,6 +968,8 @@
         private ToolStrip_Item_Label_NUD toolStripMenuItem_Label_NUD_NrWorker;
         private ToolStrip_Item_FolderSelector toolStripMenuItem_Outputfolder;
         private ToolStrip_Item_FolderSelector toolStripMenuItem_previewBackgroundImage;
+        private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem fireFLHFinderToolStripMenuItem;
     }
 }
 

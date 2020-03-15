@@ -245,6 +245,9 @@ public class CustomToolStripNumericUpDown : ToolStripControlHost
     }
 }
 
+/// <summary>
+/// needs Refresh() called, every time the background behind the transparent label changes
+/// </summary>
 public class TransparentLabel : Control
 {
     private bool drawShadow = true;
@@ -434,6 +437,46 @@ public class TransparentLabel : Control
             drawShadow = value;
             RecreateHandle();
         }
+    }
+}
+
+/// <summary>
+/// NUD that also validates and fires the ValueChanged when the Text is edited directly
+/// </summary>
+public class NumericUpDownEx : NumericUpDown
+{
+    private decimal _IncrementByMouseWheel = SystemInformation.MouseWheelScrollLines;
+    public decimal IncrementByMouseWheel
+    {
+        get { return _IncrementByMouseWheel; }
+        set { _IncrementByMouseWheel = value; }
+    }
+
+    protected override void OnTextChanged(EventArgs e)
+    {
+        base.OnTextChanged(e);
+        decimal d = this.Value;
+        if (decimal.TryParse(this.Text, out d))
+        {
+            if (d > this.Maximum) d = this.Maximum;
+            if (d < this.Minimum) d = this.Minimum;
+            this.Value = d;
+        }
+    }
+
+    protected override void OnMouseWheel(MouseEventArgs e)
+    {
+        HandledMouseEventArgs hme = e as HandledMouseEventArgs;
+        if (hme != null)
+            hme.Handled = true;
+        if (e.Delta > 0)
+            if (this.Value + _IncrementByMouseWheel > this.Maximum) this.Value = this.Maximum;
+            else
+                this.Value += _IncrementByMouseWheel;
+        if (e.Delta < 0)
+            if (this.Value - _IncrementByMouseWheel < this.Minimum) this.Value = this.Minimum;
+            else
+                this.Value -= _IncrementByMouseWheel;
     }
 }
 

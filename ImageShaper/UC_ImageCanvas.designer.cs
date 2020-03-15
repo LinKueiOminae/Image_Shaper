@@ -67,14 +67,16 @@
             this.panel_Canvas.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel_Canvas.Location = new System.Drawing.Point(0, 0);
             this.panel_Canvas.Name = "panel_Canvas";
+            this.panel_Canvas.Padding = new System.Windows.Forms.Padding(20);
             this.panel_Canvas.Size = new System.Drawing.Size(200, 200);
             this.panel_Canvas.TabIndex = 1;
             // 
             // pictureBox_Canvas
             // 
-            this.pictureBox_Canvas.Location = new System.Drawing.Point(49, 36);
+            this.pictureBox_Canvas.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pictureBox_Canvas.Location = new System.Drawing.Point(20, 20);
             this.pictureBox_Canvas.Name = "pictureBox_Canvas";
-            this.pictureBox_Canvas.Size = new System.Drawing.Size(100, 100);
+            this.pictureBox_Canvas.Size = new System.Drawing.Size(160, 160);
             this.pictureBox_Canvas.TabIndex = 0;
             this.pictureBox_Canvas.TabStop = false;
             // 

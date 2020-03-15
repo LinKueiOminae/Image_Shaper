@@ -56,6 +56,8 @@ public static class Cinimanager
 
         public string OutputFolder;
         public string PreviewBackgroundImage;
+
+        public string LastFireFLHFinderDirectory;
     }
 
     public static string inifilename = "ImageShaper.ini";
@@ -135,6 +137,8 @@ public static class Cinimanager
 
         WritePrivateProfileString("General", "OutputFolder", inisettings.OutputFolder, inifilename);
         WritePrivateProfileString("General", "PreviewBackgroundImage", inisettings.PreviewBackgroundImage, inifilename);
+
+        WritePrivateProfileString("General", "LastFireFLHFinderDirectory", inisettings.LastFireFLHFinderDirectory, inifilename);
         
         if (System.IO.File.Exists(inifilename))
         {
@@ -192,6 +196,8 @@ public static class Cinimanager
 
         inisettings.OutputFolder = GetIniFileString(inifilename, "General", "OutputFolder", "");
         inisettings.PreviewBackgroundImage = GetIniFileString(inifilename, "General", "PreviewBackgroundImage", "");
+
+        inisettings.LastFireFLHFinderDirectory = GetIniFileString(inifilename, "General", "LastFireFLHFinderDirectory", "");
     }
 
 

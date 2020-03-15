@@ -277,6 +277,7 @@ namespace ImageShaper
             dataGrid_CM.Items.Add("Load from Clipboard");
             dataGrid_CM.Items.Add("-");
             dataGrid_CM.Items.Add("Load Images / SHPs");
+            dataGrid_CM.Items.Add("Load and Split Image");
             dataGrid_CM.Items.Add("-");
             dataGrid_CM.Items.Add("Reverse order of selected cells");
             dataGrid_CM.Items.Add("-");
@@ -287,10 +288,11 @@ namespace ImageShaper
             dataGrid_CM.Items[1].Click += new EventHandler(DataGridCell_SetCompression);
             dataGrid_CM.Items[3].Click += new EventHandler(DataGridCell_LoadFromClipboard);
             dataGrid_CM.Items[5].Click += new EventHandler(DataGridCell_LoadImages);
-            dataGrid_CM.Items[7].Click += new EventHandler(DataGridCell_ReverseOrder);
-            dataGrid_CM.Items[9].Click += new EventHandler(DataGridCell_Copy);
-            dataGrid_CM.Items[10].Click += new EventHandler(DataGridCell_Cut);
-            dataGrid_CM.Items[11].Click += new EventHandler(DataGridCell_Paste);
+            dataGrid_CM.Items[6].Click += new EventHandler(DataGridCell_LoadSplitImage);
+            dataGrid_CM.Items[8].Click += new EventHandler(DataGridCell_ReverseOrder);
+            dataGrid_CM.Items[10].Click += new EventHandler(DataGridCell_Copy);
+            dataGrid_CM.Items[11].Click += new EventHandler(DataGridCell_Cut);
+            dataGrid_CM.Items[12].Click += new EventHandler(DataGridCell_Paste);
 
             //changes are now instantly applied to the selected cells
             dataGrid_CM.Items[1].Visible = false;
@@ -316,7 +318,7 @@ namespace ImageShaper
             toolTip1.SetToolTip(this.comboBox_Compression, "The compression method of the selected image/frame.\n\"Undefined\" means, this frame will use the global setting from the menustrip.");
             this.dataGridView_BitFields.ShowCellToolTips = false;
             toolTip1.SetToolTip(this.dataGridView_BitFields, "The bit flags with the compression as the second bit. The compression bit can only be changed via the combobox above.\nBy default the first bit is set, since nearly all TS/RA2 SHPs have that bit set.");
-            
+
             toolTip1.SetToolTip(this.button_RadarColor, "The frame's Radarcolor. Works only on tiberium/ore Overlays.\nTS and RA2 ignore it for all other objecttypes.");
             toolTip1.SetToolTip(this.checkBox_RadarColorAverage, "Ignore the set color and instead calculate for this frame the average color of all colored pixel.");
             toolTip1.SetToolTip(this.checkBox_FrameFiles, "Create for each frame an image file in the \\Temp subfolder.");
@@ -444,7 +446,7 @@ namespace ImageShaper
             Point center = new Point(e.CellBounds.X + e.CellBounds.Width / 2 - 1, e.CellBounds.Y + e.CellBounds.Height / 2 + 1);
             if (e.ColumnIndex == 1)
             {
-                
+
                 switch (e.Value.ToString())
                 {
                     case "!":
@@ -483,7 +485,7 @@ namespace ImageShaper
                 if ((bool)e.FormattedValue)
                     for (int i = 0; i < 5; i++)
                         e.Graphics.DrawLines(Pens.Black, new Point[] { new Point(center.X - 3, center.Y - 3 + i), new Point(center.X, center.Y + i), new Point(center.X + 6, center.Y - 6 + i) });
-                //ControlPaint.DrawCheckBox(e.Graphics, e.CellBounds.X - 1, e.CellBounds.Y - 1, e.CellBounds.Width + 2, e.CellBounds.Height + 2, (bool)e.FormattedValue ? ButtonState.Checked | ButtonState.Flat : ButtonState.Normal | ButtonState.Flat);
+            //ControlPaint.DrawCheckBox(e.Graphics, e.CellBounds.X - 1, e.CellBounds.Y - 1, e.CellBounds.Width + 2, e.CellBounds.Height + 2, (bool)e.FormattedValue ? ButtonState.Checked | ButtonState.Flat : ButtonState.Normal | ButtonState.Flat);
             e.Handled = true;
         }
         #endregion
@@ -715,7 +717,7 @@ namespace ImageShaper
 
         void dataGridView_Files_DragOver(object sender, DragEventArgs e)
         {
-            e.Effect = DragDropEffects.Copy;  
+            e.Effect = DragDropEffects.Copy;
         }
         private Rectangle dragBoxFromMouseDown;
         //necessary, since the DataGridViewCell changes its properties as soon as something is changed in the DGV
@@ -1202,6 +1204,29 @@ namespace ImageShaper
             }
         }
 
+        void DataGridCell_LoadSplitImage(object sender, EventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Title = "Load Image";
+            ofd.InitialDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            ofd.FileName = "";
+            ofd.Filter = "Image file|*.png;*.bmp";
+            ofd.Multiselect = false;
+            if (ofd.ShowDialog() != DialogResult.Cancel)
+            {
+                int rowindex = targetCell.Y;
+                int columnindex = targetCell.X;
+                if (columnindex == -1) columnindex = 0;
+
+                Form_LoadAndSplitImage lasi = new Form_LoadAndSplitImage(ofd.FileName, GetProgramTempPath);
+                lasi.Icon = this.Icon;
+                lasi.StartPosition = FormStartPosition.Manual;
+                lasi.Location = this.PointToScreen(this.customMenuStrip1.Location);
+                if (lasi.ShowDialog() == DialogResult.OK)
+                    AddFilesToDataGrid(lasi.images, columnindex, rowindex);
+            }
+        }
+
         void DataGridCell_ReverseOrder(object sender, EventArgs e)
         {
             List<DGVCell> Cells2Reverse = new List<DGVCell>();
@@ -1227,7 +1252,7 @@ namespace ImageShaper
                 int palindex = -1;
                 palindex = PaletteManager.GetPaletteIndex(this.uC_Palette1.Palette, false);
 
-                
+
                 foreach (DataGridViewCell cell in this.dataGridView_Files.SelectedCells)
                     if (cell.Value != null)
                         ((CImageFile)cell.Value).PaletteIndex = palindex;
@@ -1301,8 +1326,8 @@ namespace ImageShaper
 
             Stopwatch duration = Stopwatch.StartNew();
 
-            string outputfolder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            string ouputfolder_Temp = Path.Combine(outputfolder, "Temp");
+            string outputfolder = GetProgramPath; // Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            string ouputfolder_Temp = GetProgramTempPath; // Path.Combine(outputfolder, "Temp");
             if (this.toolStripMenuItem_Outputfolder.ToolStrip_UC_FolderSelector.Value != "")
                 outputfolder = this.toolStripMenuItem_Outputfolder.ToolStrip_UC_FolderSelector.Value;
 
@@ -1594,9 +1619,9 @@ namespace ImageShaper
                     }
             }
             else
-            if (this.dataGridView_Files.SelectedCells.Count > 0)
-                if (this.dataGridView_Files.SelectedCells[0].Value != null)
-                    files.Add((CImageFile)this.dataGridView_Files.SelectedCells[0].Value);
+                if (this.dataGridView_Files.SelectedCells.Count > 0)
+                    if (this.dataGridView_Files.SelectedCells[0].Value != null)
+                        files.Add((CImageFile)this.dataGridView_Files.SelectedCells[0].Value);
 
             if (files.Count > 0)
             {
@@ -1699,7 +1724,7 @@ namespace ImageShaper
                     PreviewBW.WorkerSupportsCancellation = true;
 
                     PreviewBW.RunWorkerAsync(new CImageJob("", -1, "", "", files, false, GetDefaultCompression));
-                
+
                 }
             }
         }
@@ -1988,6 +2013,19 @@ namespace ImageShaper
             ab.AddEmptyLine(1);
             ab.AddText("\t-(update) command line option added to support setting \"Split result\"");
 
+            ab.AddEmptyLine();
+            ab.AddText("Version 01.01.00.24", Color.Black, f);
+            ab.AddEmptyLine(1);
+            ab.AddText("\t-(update) new function \"Load and Split Image\" added to right click contextmenu, which allows to load an image with frames as panels inside the image.");
+            ab.AddEmptyLine(1);
+            ab.AddText("\t-(update) new tool \"FireFLH Finder\" added to menubar \"Tools\" , which makes it easy to find the correct values for FireFLH, PrimaryFirePixelOffset, DamageFireOffset# and MuzzeFlash#.");
+            ab.AddEmptyLine(1);
+            ab.AddText("\t-(update) the custom image control (e.g. Preview window) doesn't reset the view/scrollbars anymore whenever the image is changed.");
+
+            //TODO add auto Shadow generator
+            ab.AddEmptyLine(1);
+            ab.AddText("\t-");
+
             ab.AddEmptyLine(1);
             ab.Show();
         }
@@ -2186,6 +2224,17 @@ namespace ImageShaper
             }
 
             return files.ToArray();
+        }
+
+        private void FireFLHFinderToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Form_FireFLHFinder flhfinder = new Form_FireFLHFinder();
+            flhfinder.Icon = this.Icon;
+            flhfinder.StartPosition = FormStartPosition.Manual;
+            flhfinder.Location = this.PointToScreen(this.customMenuStrip1.Location);
+            flhfinder.Palette = PaletteManager.GetPalette(0);
+            flhfinder.InitialDirectory = this.toolStripMenuItem_Outputfolder.ToolStrip_UC_FolderSelector.Value;
+            flhfinder.Show();
         }
 
     }
