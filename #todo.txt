@@ -1,0 +1,3 @@
+-optimize canvas
+-auto radar color (average color)
+-bitfields
